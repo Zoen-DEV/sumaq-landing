@@ -14,20 +14,21 @@ Página web de [Sumaq Studios](https://sumaqstudios.com), estudio de diseño y d
 ## Inicio rápido
 
 ```bash
-# Instalar dependencias
-npm install
+# Instalar dependencias (primera vez: aprobar builds nativos)
+pnpm approve-builds esbuild sharp
+pnpm install
 
 # Servidor de desarrollo (http://localhost:4321)
-npm run dev
+pnpm dev
 
 # Validar TypeScript
-npm run check
+pnpm check
 
 # Build de producción
-npm run build
+pnpm build
 
 # Previsualizar build local
-npm run preview
+pnpm preview
 ```
 
 ## Estructura
@@ -35,22 +36,29 @@ npm run preview
 ```
 src/
 ├── layouts/
-│   └── BaseLayout.astro   # HTML base, meta tags, tema claro/oscuro
+│   └── BaseLayout.astro      # HTML base, meta tags, tema claro/oscuro
+├── components/
+│   ├── Nav.astro             # Navegación sticky + theme toggle
+│   └── Footer.astro
 ├── pages/
-│   └── index.astro        # Página única (home)
+│   ├── index.astro           # Homepage: hero, servicios, proceso, manifiesto, FAQ, contacto
+│   ├── servicios.astro       # Detalle de servicios
+│   ├── proceso.astro         # Proceso de trabajo
+│   └── faq.astro             # Preguntas frecuentes
 └── styles/
-    ├── tokens.css         # Sistema de diseño: colores, tipografía, espaciado, easing
-    └── global.css         # Reset y estilos base
+    ├── tokens.css            # Sistema de diseño: colores, tipografía, espaciado, easing
+    └── global.css            # Reset y estilos base
 
 public/
-├── fonts/                 # Geist Variable (auto-hosted)
-├── logo/                  # Wordmarks SVG (modo claro e invertido)
+├── fonts/                    # Geist Variable (auto-hosted)
+├── logo/                     # Wordmarks SVG (modo claro e invertido)
 └── favicon.svg
 ```
 
 ## Características
 
-- **Single-page** con secciones: hero, servicios, proceso, manifiesto, FAQ, contacto
+- **Multi-página** con navegación compartida (Nav + Footer como componentes Astro)
+- **Sección de contacto exclusiva en homepage** — el CTA "Hablemos" redirige a `/#contacto` desde otras páginas
 - **Animaciones scroll-driven**: parallax, reveals por palabra, spotlight en cards, manifesto pinned con scrub
 - **Tema claro/oscuro**: toggle persistido en `localStorage`, respeta `prefers-color-scheme`
 - **Reduced-motion**: todas las animaciones se desactivan automáticamente si el usuario lo prefiere

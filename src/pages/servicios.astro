@@ -1,0 +1,317 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+
+const services = [
+  {
+    n: '01',
+    title: 'Webs a medida',
+    body: 'Desde landings hasta ecommerce y web apps. Las pensamos como parte de tu marca y las codeamos para que aguanten cuando crezcas.',
+    capabilities: ['Landing pages', 'Corporativas', 'Ecommerce', 'Web apps', 'SEO técnico'],
+  },
+  {
+    n: '02',
+    title: 'Apps móviles',
+    body: 'iOS, Android o multiplataforma. Que se sientan rápidas para tu usuario y sean fáciles de mantener cuando te las entreguemos.',
+    capabilities: ['iOS nativo', 'Android nativo', 'React Native', 'Backend integrado', 'Distribución'],
+  },
+  {
+    n: '03',
+    title: 'Diseño & marca',
+    body: 'Identidad, sistemas de diseño y UX. Para que tu marca se reconozca y tu producto se entienda solo.',
+    capabilities: ['Branding', 'Logo & wordmark', 'Sistema de diseño', 'UX research', 'Auditoría visual'],
+  },
+];
+---
+
+<BaseLayout title="Servicios · Sumaq" description="Webs a medida, apps móviles y diseño de marca. Mismo nivel de detalle en los tres.">
+  <Nav />
+
+  <main>
+    <section class="services" id="servicios">
+      <header class="section-head services__head">
+        <p class="eyebrow" data-reveal>Qué hacemos</p>
+        <h1 class="section-title" data-reveal-words>Tres frentes. Una sola vara.</h1>
+        <p class="section-lead" data-reveal>
+          Webs, mobile y marca. Mismo nivel de detalle en los tres — lo único que cambia es el formato.
+        </p>
+      </header>
+
+      <div class="services__grid">
+        {services.map((s) => (
+          <a class="service" href="/#contacto" data-service>
+            <header class="service__head">
+              <span class="service__n">{s.n}</span>
+              <h2 class="service__title">{s.title}</h2>
+            </header>
+            <p class="service__body">{s.body}</p>
+            <ul class="service__caps">
+              {s.capabilities.map((c) => (
+                <li>{c}</li>
+              ))}
+            </ul>
+            <div class="service__arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <path d="M5 12h14M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+  </main>
+
+  <Footer />
+
+  <script>
+    import { gsap } from 'gsap';
+    import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!reduced) {
+      document.querySelectorAll<HTMLElement>('[data-reveal-words]').forEach((el) => {
+        const text = el.textContent ?? '';
+        el.textContent = '';
+        const words = text.trim().split(/\s+/);
+        const frag = document.createDocumentFragment();
+        words.forEach((w, i) => {
+          const outer = document.createElement('span');
+          outer.className = 'reveal-word';
+          const inner = document.createElement('span');
+          inner.className = 'reveal-word__inner';
+          inner.textContent = w;
+          outer.appendChild(inner);
+          frag.appendChild(outer);
+          if (i < words.length - 1) frag.appendChild(document.createTextNode(' '));
+        });
+        el.appendChild(frag);
+
+        const tl = gsap.timeline({ scrollTrigger: { trigger: el, start: 'top 88%', once: true } });
+        tl.set(el, { opacity: 1 }).from(el.querySelectorAll('.reveal-word__inner'), {
+          yPercent: 110, opacity: 0, duration: 0.9, ease: 'expo.out', stagger: 0.045,
+        });
+      });
+
+      gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach((el) => {
+        gsap.fromTo(el, { y: 22, opacity: 0 }, {
+          y: 0, opacity: 1, duration: 0.75, ease: 'power3.out',
+          scrollTrigger: { trigger: el, start: 'top 90%', once: true },
+        });
+      });
+
+      const servicesSection = document.querySelector<HTMLElement>('#servicios');
+      if (servicesSection) {
+        const serviceCards = servicesSection.querySelectorAll<HTMLElement>('[data-service]');
+
+        gsap.fromTo(serviceCards, { y: 24, opacity: 0 }, {
+          y: 0, opacity: 1, duration: 0.7, ease: 'power3.out', stagger: 0.12,
+          scrollTrigger: { trigger: servicesSection, start: 'top 75%', once: true },
+        });
+
+        serviceCards.forEach((card) => {
+          card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            card.style.setProperty('--mx', `${((e.clientX - rect.left) / rect.width) * 100}%`);
+            card.style.setProperty('--my', `${((e.clientY - rect.top) / rect.height) * 100}%`);
+          });
+          card.addEventListener('mouseleave', () => {
+            card.style.setProperty('--mx', '50%');
+            card.style.setProperty('--my', '0%');
+          });
+        });
+      }
+
+      const magnets = document.querySelectorAll<HTMLElement>('[data-magnetic]');
+      magnets.forEach((el) => {
+        const strength = parseFloat(el.dataset.magneticStrength ?? '0.25');
+        const xTo = gsap.quickTo(el, 'x', { duration: 0.5, ease: 'power3.out' });
+        const yTo = gsap.quickTo(el, 'y', { duration: 0.5, ease: 'power3.out' });
+        el.addEventListener('pointermove', (e) => {
+          const rect = el.getBoundingClientRect();
+          xTo((e.clientX - rect.left - rect.width / 2) * strength);
+          yTo((e.clientY - rect.top - rect.height / 2) * strength);
+        });
+        el.addEventListener('pointerleave', () => {
+          gsap.to(el, { x: 0, y: 0, duration: 0.7, ease: 'elastic.out(1, 0.4)' });
+        });
+      });
+
+      window.addEventListener('load', () => ScrollTrigger.refresh());
+    }
+  </script>
+</BaseLayout>
+
+<style>
+  .services,
+  .section-head {
+    max-width: var(--container-max);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--container-pad);
+    padding-right: var(--container-pad);
+  }
+
+  .section-head {
+    margin-bottom: 64px;
+    max-width: 720px;
+  }
+  .section-lead {
+    font-size: var(--text-lg);
+    color: var(--color-muted-foreground);
+    line-height: var(--leading-relaxed);
+    max-width: 56ch;
+    margin-top: 12px;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--color-muted-foreground);
+    margin-bottom: 20px;
+  }
+  .section-title {
+    font-size: clamp(2rem, 4.5vw, 3.25rem);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: var(--tracking-display);
+    line-height: var(--leading-tight);
+  }
+  .reveal-word {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+    line-height: 1.1;
+    padding-bottom: 0.08em;
+  }
+  .reveal-word__inner { display: inline-block; will-change: transform, opacity; }
+
+  :global(html.js-ready) [data-reveal],
+  :global(html.js-ready) [data-reveal-words],
+  :global(html.js-ready) [data-service] { opacity: 0; }
+
+  .services {
+    padding-top: 140px;
+    padding-bottom: 140px;
+  }
+  .services__head { max-width: none; }
+  .services__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .service {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 32px 28px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--color-card) 60%, transparent);
+    transition: border-color var(--dur-slow) var(--ease-out-quart),
+                transform var(--dur-slow) var(--ease-spring),
+                background var(--dur-slow) var(--ease-out-quart),
+                box-shadow var(--dur-slow) var(--ease-out-quart);
+    will-change: transform;
+    overflow: hidden;
+  }
+  .service::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      400px 200px at var(--mx, 50%) var(--my, 0%),
+      color-mix(in srgb, var(--color-foreground) 6%, transparent),
+      transparent 60%
+    );
+    opacity: 0;
+    transition: opacity var(--dur-base) var(--ease-out-quart);
+    pointer-events: none;
+  }
+  .service:hover {
+    border-color: color-mix(in srgb, var(--color-foreground) 35%, var(--color-border));
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+  }
+  .service:hover::before { opacity: 1; }
+  .service__head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .service__n {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-muted-foreground);
+    letter-spacing: var(--tracking-wide);
+  }
+  .service__title {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: var(--tracking-heading);
+    line-height: var(--leading-snug);
+  }
+  .service__body {
+    font-size: var(--text-base);
+    color: var(--color-muted-foreground);
+    line-height: var(--leading-relaxed);
+    margin-bottom: 24px;
+    max-width: 38ch;
+  }
+  .service__caps {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .service__caps li {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-muted-foreground);
+    letter-spacing: var(--tracking-tight);
+    padding-left: 18px;
+    position: relative;
+  }
+  .service__caps li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 8px;
+    height: 1px;
+    background: var(--color-muted-foreground);
+  }
+  .service__arrow {
+    margin-top: auto;
+    color: var(--color-muted-foreground);
+    transition: transform var(--dur-slow) var(--ease-out-quart),
+                color var(--dur-slow) var(--ease-out-quart);
+  }
+  .service:hover .service__arrow {
+    color: var(--color-foreground);
+    transform: translateX(6px);
+  }
+
+  @media (max-width: 640px) {
+    .services { padding-top: 88px; padding-bottom: 88px; }
+    .services__grid { grid-template-columns: 1fr; }
+    .service { padding: 28px 24px; }
+    .section-head { margin-bottom: 48px; }
+    .section-title { font-size: clamp(1.75rem, 7vw, 2.5rem); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-reveal], [data-reveal-words], [data-service] { opacity: 1 !important; transform: none !important; }
+  }
+</style>
