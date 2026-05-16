@@ -1,0 +1,63 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Sumaq · Estudio digital',
+  description = 'Diseñamos y construimos webs y apps a medida. Calidad imponente, en semanas no meses.',
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="es" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/logo/app-icon-light.svg" />
+
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={Astro.url.href} />
+    <meta property="og:image" content="/logo/app-icon-light.svg" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    <meta name="color-scheme" content="dark light" />
+
+    <link rel="preload" href="/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin />
+
+    <!-- Theme init + js-ready guard: dark por defecto + ocultar reveals si JS está vivo. Inline anti-FOUC. -->
+    <script is:inline>
+      (() => {
+        try {
+          const stored = localStorage.getItem('theme');
+          const theme = stored === 'light' ? 'light' : 'dark';
+          document.documentElement.classList.toggle('dark', theme === 'dark');
+          document.documentElement.dataset.theme = theme;
+        } catch {
+          document.documentElement.classList.add('dark');
+          document.documentElement.dataset.theme = 'dark';
+        }
+        // Si reduced-motion, no escondemos nada — el contenido se ve fijo.
+        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          document.documentElement.classList.add('js-ready');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
