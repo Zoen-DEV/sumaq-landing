@@ -255,7 +255,6 @@ const process = [
 
     gsap.registerPlugin(ScrollTrigger);
 
-    document.addEventListener('astro:page-load', () => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (reduced) {
@@ -485,9 +484,9 @@ const process = [
         });
       });
 
-      ScrollTrigger.refresh();
+      /* ---------- Refresh tras carga ---------- */
+      window.addEventListener('load', () => ScrollTrigger.refresh());
     }
-    });
   </script>
 </BaseLayout>
 
