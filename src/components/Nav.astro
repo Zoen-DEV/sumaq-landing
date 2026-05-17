@@ -1,7 +1,7 @@
 ---
 const { pathname } = Astro.url;
 ---
-<header class="nav">
+<header class="nav" transition:persist>
   <div class="nav__inner">
     <a href="/" aria-label="Sumaq" class="nav__logo">
       <img src="/logo/wordmark.svg" alt="Sumaq" height="28" class="nav__logo-img nav__logo-img--light" />
@@ -63,6 +63,12 @@ const { pathname } = Astro.url;
   window.addEventListener('scroll', () => {
     document.querySelector('.nav')?.classList.toggle('nav--scrolled', window.scrollY > 8);
   }, { passive: true });
+
+  document.addEventListener('astro:after-swap', () => {
+    document.querySelector('.nav')?.classList.toggle('nav--scrolled', window.scrollY > 8);
+    const cta = document.querySelector<HTMLAnchorElement>('.nav__cta');
+    if (cta) cta.href = window.location.pathname === '/' ? '#contacto' : '/#contacto';
+  });
 </script>
 
 <style>

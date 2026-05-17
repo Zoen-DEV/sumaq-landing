@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
 
 interface Props {
   title?: string;
@@ -38,6 +39,8 @@ const {
 
     <link rel="preload" href="/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin />
 
+    <ClientRouter />
+
     <!-- Theme init + js-ready guard: dark por defecto + ocultar reveals si JS está vivo. Inline anti-FOUC. -->
     <script is:inline>
       (() => {
@@ -55,6 +58,12 @@ const {
           document.documentElement.classList.add('js-ready');
         }
       })();
+    </script>
+    <script>
+      import { ScrollTrigger } from 'gsap/ScrollTrigger';
+      document.addEventListener('astro:before-swap', () => {
+        ScrollTrigger.getAll().forEach(st => st.kill());
+      });
     </script>
   </head>
   <body>

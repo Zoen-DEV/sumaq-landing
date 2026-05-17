@@ -44,6 +44,7 @@ const process = [
 
     gsap.registerPlugin(ScrollTrigger);
 
+    document.addEventListener('astro:page-load', () => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (!reduced) {
@@ -101,8 +102,9 @@ const process = [
         });
       });
 
-      window.addEventListener('load', () => ScrollTrigger.refresh());
+      ScrollTrigger.refresh();
     }
+    });
   </script>
 </BaseLayout>
 
