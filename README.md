@@ -71,4 +71,4 @@ El sitio está configurado para `https://sumaqstudios.com`. Genera HTML estátic
 
 ## Contacto
 
-enzoholgadodev@gmail.com
+holasumaqstudios@gmail.com
