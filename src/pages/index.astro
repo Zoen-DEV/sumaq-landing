@@ -162,6 +162,15 @@ const process = [
         </a>
       ))}
     </div>
+
+    <!-- Indicadores del carrusel (solo mobile) -->
+    <div class="services__nav" data-services-nav>
+      {services.map((s) => (
+        <button class="services__dot" type="button" data-services-dot aria-label={`Ver ${s.title}`}>
+          <span class="services__dot-fill" aria-hidden="true"></span>
+        </button>
+      ))}
+    </div>
   </section>
 
   <hr class="rule" />
@@ -256,6 +265,143 @@ const process = [
     gsap.registerPlugin(ScrollTrigger);
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* ============================================================
+       SERVICIOS — carrusel auto + manual (solo mobile)
+       Cada card rota cada ROTATE_MS con un indicador de progreso.
+       El swipe nativo (scroll-snap) y el click en los puntos también
+       cambian de card y reinician el temporizador.
+       ============================================================ */
+    (() => {
+      const grid = document.querySelector<HTMLElement>('.services__grid');
+      const nav = document.querySelector<HTMLElement>('[data-services-nav]');
+      if (!grid || !nav) return;
+      const gridEl = grid; // alias con tipo ya estrechado para usar en closures
+
+      const cards = Array.from(grid.querySelectorAll<HTMLElement>('.service'));
+      const dots = Array.from(nav.querySelectorAll<HTMLButtonElement>('[data-services-dot]'));
+      const fills = dots.map((d) => d.querySelector<HTMLElement>('.services__dot-fill'));
+      if (cards.length < 2) return;
+
+      const ROTATE_MS = 13000;
+      const mq = window.matchMedia('(max-width: 640px)');
+
+      let enabled = false;
+      let active = 0;
+      let rafId = 0;
+      let progStart = 0;   // performance.now() del último reinicio
+      let progElapsed = 0; // acumulado mientras está en pausa
+      let paused = false;  // pausa por visibilidad de pestaña
+      let scrolling = false;
+      let scrollTimer = 0;
+
+      const center = (el: HTMLElement) => {
+        const r = el.getBoundingClientRect();
+        return r.left + r.width / 2;
+      };
+
+      function nearestCard() {
+        const target = center(gridEl);
+        let best = 0;
+        let bestDist = Infinity;
+        cards.forEach((c, i) => {
+          const d = Math.abs(center(c) - target);
+          if (d < bestDist) { bestDist = d; best = i; }
+        });
+        return best;
+      }
+
+      function scrollToCard(i: number) {
+        const card = cards[i];
+        if (!card) return;
+        const delta = center(card) - center(gridEl);
+        gridEl.scrollTo({ left: gridEl.scrollLeft + delta, behavior: reduced ? 'auto' : 'smooth' });
+      }
+
+      function setActive(i: number) {
+        active = i;
+        dots.forEach((d, idx) => d.classList.toggle('is-active', idx === i));
+        fills.forEach((f, idx) => {
+          if (f) f.style.transform = reduced && idx === i ? 'scaleX(1)' : 'scaleX(0)';
+        });
+      }
+
+      function resetProgress() {
+        progStart = performance.now();
+        progElapsed = 0;
+      }
+
+      function goTo(i: number) {
+        setActive(i);
+        resetProgress();
+        scrollToCard(i);
+      }
+
+      function loop(now: number) {
+        if (!enabled) return;
+        if (!paused && !scrolling && !reduced) {
+          const elapsed = progElapsed + (now - progStart);
+          const p = Math.min(elapsed / ROTATE_MS, 1);
+          const f = fills[active];
+          if (f) f.style.transform = `scaleX(${p})`;
+          if (p >= 1) goTo((active + 1) % cards.length);
+        }
+        rafId = requestAnimationFrame(loop);
+      }
+
+      function enable() {
+        if (enabled) return;
+        enabled = true;
+        setActive(nearestCard());
+        resetProgress();
+        paused = false;
+        scrolling = false;
+        if (!reduced) {
+          cancelAnimationFrame(rafId);
+          rafId = requestAnimationFrame(loop);
+        }
+      }
+
+      function disable() {
+        if (!enabled) return;
+        enabled = false;
+        cancelAnimationFrame(rafId);
+        dots.forEach((d) => d.classList.remove('is-active'));
+        fills.forEach((f) => { if (f) f.style.transform = ''; });
+      }
+
+      // Swipe / scroll manual: pausa el progreso y, al asentarse, sincroniza.
+      grid.addEventListener('scroll', () => {
+        if (!enabled) return;
+        scrolling = true;
+        clearTimeout(scrollTimer);
+        scrollTimer = window.setTimeout(() => {
+          scrolling = false;
+          setActive(nearestCard());
+          resetProgress();
+        }, 140);
+      }, { passive: true });
+
+      // Click en un punto → salta a esa card.
+      dots.forEach((d, i) => d.addEventListener('click', () => {
+        if (enabled) goTo(i);
+      }));
+
+      // Pausa el temporizador cuando la pestaña no está visible.
+      document.addEventListener('visibilitychange', () => {
+        if (!enabled) return;
+        if (document.hidden) {
+          if (!paused) { paused = true; progElapsed += performance.now() - progStart; }
+        } else if (paused) {
+          paused = false;
+          progStart = performance.now();
+        }
+      });
+
+      const apply = () => (mq.matches ? enable() : disable());
+      mq.addEventListener('change', apply);
+      apply();
+    })();
 
     if (reduced) {
       ScrollTrigger.refresh();
@@ -935,6 +1081,9 @@ const process = [
     transform: translateX(6px);
   }
 
+  /* Indicadores del carrusel — ocultos en desktop, visibles en mobile */
+  .services__nav { display: none; }
+
   /* ============================================================
      PILLARS
      ============================================================ */
@@ -1150,12 +1299,60 @@ const process = [
     .services, .pillars, .contact { padding-top: 88px; padding-bottom: 88px; }
     .pillars__grid { grid-template-columns: 1fr; }
     .pillar { padding: 28px 0; }
-    .pillar__line { inset: 0 0 auto 0; width: 100%; height: 1px; transform-origin: left; transform: scaleX(0); }
+    .pillar__line { inset: auto 0 0 0; width: 100%; height: 1px; transform-origin: left; transform: scaleX(0); }
     .pillar__index { font-size: 2rem; }
     .process { padding-top: 88px; padding-bottom: 96px; }
     .manifesto { min-height: 72vh; }
     .process__item { grid-template-columns: 44px 1fr; gap: 16px; padding: 28px 0; }
-    .service { padding: 28px 24px; }
+
+    /* ----- Servicios como carrusel horizontal (scroll-snap) ----- */
+    .services__grid {
+      display: flex;
+      grid-template-columns: none;
+      gap: 16px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .services__grid::-webkit-scrollbar { display: none; }
+    .service {
+      flex: 0 0 100%;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      padding: 28px 24px;
+    }
+
+    .services__nav {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 28px;
+    }
+    .services__dot {
+      appearance: none;
+      -webkit-appearance: none;
+      border: 0;
+      padding: 0;
+      width: 34px;
+      height: 4px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--color-foreground) 16%, transparent);
+      overflow: hidden;
+      cursor: pointer;
+      transition: width var(--dur-base) var(--ease-out-quart);
+    }
+    .services__dot.is-active { width: 48px; }
+    .services__dot-fill {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--color-foreground);
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+
     .section-head { margin-bottom: 48px; }
     .section-title { font-size: clamp(1.75rem, 7vw, 2.5rem); }
     .contact__actions { flex-direction: column; }
